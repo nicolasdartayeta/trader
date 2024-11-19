@@ -47,10 +47,10 @@ class TestStrategy(bt.Strategy):
         self.sellSignal1 = bt.indicators.CrossDown(self.shortSMA, self.longSMA)        
     
     def generateBuySignal2(self):
-        self.buySignal2 = bt.indicators.CrossUp(self.rsi, self.params.rsi_lower)
+        self.buySignal2 = self.rsi < self.params.rsi_upper
     
     def generateSellSignal2(self):
-        self.sellSignal2 = bt.indicators.CrossDown(self.rsi, self.params.rsi_upper)
+        self.sellSignal2 = self.rsi > self.params.rsi_lower
 
     
 
