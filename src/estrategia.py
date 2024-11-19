@@ -41,10 +41,10 @@ class TestStrategy(bt.Strategy):
         self.buySignal1 = bt.indicators.CrossUp(self.shortSMA, self.longSMA)
     
     def generateBuySignal2(self):
-        self.buySignal2 = bt.indicators.CrossUp(self.rsi, self.params.rsi_lower)
+        self.buySignal2 = self.rsi < self.params.rsi_upper
     
     def generateSellSignal2(self):
-        self.sellSignal2 = bt.indicators.CrossDown(self.rsi, self.params.rsi_upper)
+        self.sellSignal2 = self.rsi > self.params.rsi_lower
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
