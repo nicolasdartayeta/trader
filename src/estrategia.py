@@ -5,6 +5,9 @@ class TestStrategy(bt.Strategy):
     params = (
         ('periodShortSMA', 10),
         ('periodLongSMA', 60),
+        ('rsi_period', 14),
+        ('rsi_upper', 70),
+        ('rsi_lower', 30),
         ('maxOrders', 10),
         ('exitbars', 5),
     )
@@ -21,9 +24,10 @@ class TestStrategy(bt.Strategy):
         # Indicadores
         self.shortSMA = bt.indicators.SMA(self.data.close, period=self.params.periodShortSMA)
         self.longSMA = bt.indicators.SMA(self.data.close, period=self.params.periodLongSMA)
+        self.rsi = bt.indicators.RSI(self.data.close, period=self.params.rsi_period)
 
         self.generateBuySignal1()
-        self.butSignal2 = True
+        self.generateBuySignal2()
         self.buySignal3 = True
 
         self.generateSellSignal1()
@@ -37,6 +41,12 @@ class TestStrategy(bt.Strategy):
     # Cross method
     def generateBuySignal1(self):
         self.buySignal1 = bt.indicators.CrossUp(self.shortSMA, self.longSMA)
+    
+    def generateBuySignal2(self):
+        self.buySignal2 = bt.indicators.CrossUp(self.rsi, self.params.rsi_lower)
+    
+    def generateSellSignal2(self):
+        self.sellSignal2 = bt.indicators.CrossDown(self.rsi, self.params.rsi_upper)
 
     # Cross method
     def generateSellSignal1(self):
@@ -88,7 +98,7 @@ class TestStrategy(bt.Strategy):
             return
 
         # Not yet ... we MIGHT BUY if ...
-        if self.buySignal1[0]:
+        if self.buySignal1[0] and self.buySignal2[0]:
             self.log(f'shortSMA: {self.shortSMA[0]}, longSMA: {self.longSMA[0]}')
             # BUY, BUY, BUY!!! (with default parameters)
             self.log('BUY CREATE, %.2f' % self.dataclose[0])
