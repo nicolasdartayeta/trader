@@ -14,7 +14,7 @@ if __name__ == '__main__':
     cerebro = bt.Cerebro()
 
     # Add a strategy
-    cerebro.addstrategy(TestStrategy, exitbars=20)
+    cerebro.addstrategy(TestStrategy, exitbars=60)
 
     # Datas are in a subfolder of the samples. Need to find where the script is
     # because it could have been called from anywhere
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         # Do not pass values before this date
         fromdate=datetime.datetime(2015, 2, 2),
         # Do not pass values before this date
-        todate=datetime.datetime(2024, 11, 18),
+        todate=datetime.datetime(2024, 10, 30),
         # Do not pass values after this date
         reverse=False)
 

@@ -3,6 +3,9 @@ import backtrader as bt
 # Create a Stratey
 class TestStrategy(bt.Strategy):
     params = (
+        ('periodShortSMA', 10),
+        ('periodLongSMA', 60),
+        ('maxOrders', 10),
         ('exitbars', 5),
     )
 
@@ -15,10 +18,23 @@ class TestStrategy(bt.Strategy):
         # Keep a reference to the "close" line in the data[0] dataseries
         self.dataclose = self.datas[0].close
 
+        # Indicadores
+        self.shortSMA = bt.indicators.SMA(self.data.close, period=self.params.periodShortSMA)
+        self.longSMA = bt.indicators.SMA(self.data.close, period=self.params.periodLongSMA)
+
+        self.generateBuySignal1()
+        self.butSignal2 = True
+        self.buySignal3 = True
+
         # To keep track of pending orders and buy price/commission
         self.order = None
+        self.orders = []
         self.buyprice = None
         self.buycomm = None
+
+    # Cross method
+    def generateBuySignal1(self):
+        self.buySignal1 = bt.indicators.CrossUp(self.shortSMA, self.longSMA)
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -48,7 +64,7 @@ class TestStrategy(bt.Strategy):
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log('Order Canceled/Margin/Rejected')
 
-        self.order = None
+        self.orders.remove(order)
 
     def notify_trade(self, trade):
         if not trade.isclosed:
@@ -62,31 +78,22 @@ class TestStrategy(bt.Strategy):
         self.log('Close, %.2f' % self.dataclose[0])
 
         # Check if an order is pending ... if yes, we cannot send a 2nd one
-        if self.order:
+        if len(self.orders) >= self.params.maxOrders:
             return
 
-        # Check if we are in the market
-        if not self.position:
+        # Not yet ... we MIGHT BUY if ...
+        if self.buySignal1[0]:
+            self.log(f'shortSMA: {self.shortSMA[0]}, longSMA: {self.longSMA[0]}')
+            # BUY, BUY, BUY!!! (with default parameters)
+            self.log('BUY CREATE, %.2f' % self.dataclose[0])
 
-            # Not yet ... we MIGHT BUY if ...
-            if self.dataclose[0] < self.dataclose[-1]:
-                    # current close less than previous close
-
-                    if self.dataclose[-1] < self.dataclose[-2]:
-                        # previous close less than the previous close
-
-                        # BUY, BUY, BUY!!! (with default parameters)
-                        self.log('BUY CREATE, %.2f' % self.dataclose[0])
-
-                        # Keep track of the created order to avoid a 2nd order
-                        self.order = self.buy()
-
-        else:
-
+            # Keep track of the created order to avoid a 2nd order
+            self.orders.append(self.buy())
+        if self.position: 
             # Already in the market ... we might sell
             if len(self) >= (self.bar_executed + self.params.exitbars):
-                # SELL, SELL, SELL!!! (with all possible default parameters)
+                # SELL
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
                 # Keep track of the created order to avoid a 2nd order
-                self.order = self.sell()
+                self.orders.append(self.sell())
