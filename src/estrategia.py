@@ -1,4 +1,5 @@
 import backtrader as bt
+import random
 
 # Create a Stratey
 class TestStrategy(bt.Strategy):
@@ -41,6 +42,9 @@ class TestStrategy(bt.Strategy):
     # Cross method
     def generateBuySignal1(self):
         self.buySignal1 = bt.indicators.CrossUp(self.shortSMA, self.longSMA)
+
+    def generateSellSignal1(self):
+        self.sellSignal1 = bt.indicators.CrossDown(self.shortSMA, self.longSMA)        
     
     def generateBuySignal2(self):
         self.buySignal2 = bt.indicators.CrossUp(self.rsi, self.params.rsi_lower)
@@ -48,9 +52,7 @@ class TestStrategy(bt.Strategy):
     def generateSellSignal2(self):
         self.sellSignal2 = bt.indicators.CrossDown(self.rsi, self.params.rsi_upper)
 
-    # Cross method
-    def generateSellSignal1(self):
-        self.sellSignal1 = bt.indicators.CrossDown(self.shortSMA, self.longSMA)    
+    
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -98,23 +100,27 @@ class TestStrategy(bt.Strategy):
             return
 
         # Not yet ... we MIGHT BUY if ...
-        if self.buySignal1[0] and self.buySignal2[0]:
+        if self.buySignal1[0]:
             self.log(f'shortSMA: {self.shortSMA[0]}, longSMA: {self.longSMA[0]}')
             # BUY, BUY, BUY!!! (with default parameters)
             self.log('BUY CREATE, %.2f' % self.dataclose[0])
             
-            # Keep track of the created order to avoid a 2nd order
-            self.orders.append(self.buy(size=10))
+            # Calcular el size de la orden
+            size = int(self.cash / self.dataclose[0] / 2)
+            
+            # Añadir orden a ordenes abiertas
+            self.orders.append(self.buy(size=size))
+
         if self.position: 
             # Already in the market ... we might sell
             if len(self) >= (self.bar_executed + self.params.exitbars) and self.sellSignal1[0]:
                 # SELL
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
-                size = int(self.cash / self.dataclose[0] / 4)
+                size = self.position.size if random.random() >= 0.3 else self.position.size / 1.2
 
                 # Keep track of the created order to avoid a 2nd order
-                self.orders.append(self.sell(size=self.position.size))
+                self.orders.append(self.sell(size=int(size)))
 
     def notify_cashvalue(self, cash, value):
         self.value = value

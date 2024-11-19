@@ -56,6 +56,6 @@ if __name__ == '__main__':
 
     # Print out the final result
     print('Final Portfolio Value: %.2f' % finalValue)
-
-    print('Profit: %.2f' % (finalValue / initValue - 1))
+    profit = (finalValue / initValue - 1)*100
+    print(f'Profit: {round(profit, 2)}%')
     # cerebro.plot()
