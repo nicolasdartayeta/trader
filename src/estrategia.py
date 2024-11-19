@@ -4,13 +4,12 @@ import random
 # Create a Stratey
 class TestStrategy(bt.Strategy):
     params = (
-        ('periodShortSMA', 10),
-        ('periodLongSMA', 60),
-        ('rsi_period', 14),
-        ('rsi_upper', 70),
-        ('rsi_lower', 30),
+        ('periodShortSMA', 5),
+        ('periodLongSMA', 30),
+        ('rsi_period', 5),
+        ('rsi_upper', 80),
+        ('rsi_lower', 25),
         ('maxOrders', 10),
-        ('exitbars', 5),
     )
 
     def log(self, txt, dt=None):
@@ -26,12 +25,15 @@ class TestStrategy(bt.Strategy):
         self.shortSMA = bt.indicators.SMA(self.data.close, period=self.params.periodShortSMA)
         self.longSMA = bt.indicators.SMA(self.data.close, period=self.params.periodLongSMA)
         self.rsi = bt.indicators.RSI(self.data.close, period=self.params.rsi_period)
+        self.bb = bt.indicators.BollingerBands()
 
         self.generateBuySignal1()
         self.generateBuySignal2()
-        self.buySignal3 = True
+        self.generateBuySignal3()
 
         self.generateSellSignal1()
+        self.generateSellSignal2()
+        self.generateSellSignal3()
 
         # To keep track of pending orders and buy price/commission
         self.order = None
@@ -46,13 +48,19 @@ class TestStrategy(bt.Strategy):
     def generateSellSignal1(self):
         self.sellSignal1 = bt.indicators.CrossDown(self.shortSMA, self.longSMA)        
     
+    # RSI
     def generateBuySignal2(self):
-        self.buySignal2 = self.rsi < self.params.rsi_upper
+        self.buySignal2 = self.rsi < self.params.rsi_lower
     
     def generateSellSignal2(self):
-        self.sellSignal2 = self.rsi > self.params.rsi_lower
+        self.sellSignal2 = self.rsi > self.params.rsi_upper
 
-    
+    # Bollinger bands
+    def generateBuySignal3(self):
+        self.buySignal3 = self.data.close > self.bb.top
+
+    def generateSellSignal3(self):
+        self.sellSignal3 = self.data.close < self.bb.bot
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -100,24 +108,24 @@ class TestStrategy(bt.Strategy):
             return
 
         # Not yet ... we MIGHT BUY if ...
-        if self.buySignal1[0]:
+        if self.cash >= self.dataclose[0] and self.buySignal1[0] or self.buySignal2[0]:
             self.log(f'shortSMA: {self.shortSMA[0]}, longSMA: {self.longSMA[0]}')
             # BUY, BUY, BUY!!! (with default parameters)
             self.log('BUY CREATE, %.2f' % self.dataclose[0])
-            
-            # Calcular el size de la orden
-            size = int(self.cash / self.dataclose[0] / 2)
-            
+            # Calcular el size de la orden. Compra entre con entre el 20% y el 80% del cash disponible
+            size = int(self.cash / (self.dataclose[0]*1.01) * 0.5)
+            self.log(f'size: {size}')
             # Añadir orden a ordenes abiertas
             self.orders.append(self.buy(size=size))
 
         if self.position: 
             # Already in the market ... we might sell
-            if len(self) >= (self.bar_executed + self.params.exitbars) and self.sellSignal1[0]:
+            self.log(f'signal1: {self.sellSignal1[0]}, signal2: {self.sellSignal2[0]}, signal3: {self.sellSignal3[0]}')
+            if self.sellSignal1[0] or self.sellSignal3[0]:
                 # SELL
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
-                size = self.position.size if random.random() >= 0.3 else self.position.size / 1.2
+                size = self.position.size
 
                 # Keep track of the created order to avoid a 2nd order
                 self.orders.append(self.sell(size=int(size)))

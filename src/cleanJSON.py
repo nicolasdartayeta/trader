@@ -6,8 +6,8 @@ from datetime import datetime
 
 
 modpath = os.path.dirname(os.path.abspath(sys.argv[0]))
-input_file = os.path.join(modpath, '../data/BRK-B.json')
-csv_file_path = os.path.join(modpath, '../data/BRK-B.csv')  # Replace with the desired output CSV file path
+input_file = os.path.join(modpath, '../data/BAC.json')
+csv_file_path = os.path.join(modpath, '../data/BAC.csv')  # Replace with the desired output CSV file path
 
 with open(input_file, "r") as f:
     data = json.load(f)

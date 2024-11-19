@@ -14,12 +14,12 @@ if __name__ == '__main__':
     cerebro = bt.Cerebro()
 
     # Add a strategy
-    cerebro.addstrategy(TestStrategy, exitbars=30)
+    cerebro.addstrategy(TestStrategy)
 
     # Datas are in a subfolder of the samples. Need to find where the script is
     # because it could have been called from anywhere
     modpath = os.path.dirname(os.path.abspath(sys.argv[0]))
-    datapath = os.path.join(modpath, '../data/BRK-B.csv')
+    datapath = os.path.join(modpath, '../data/MS.csv')
 
     # Create a Data Feed
     data = bt.feeds.YahooFinanceCSVData(
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         # Do not pass values before this date
         fromdate=datetime.datetime(2015, 2, 2),
         # Do not pass values before this date
-        todate=datetime.datetime(2017, 10, 30),
+        todate=datetime.datetime(2023, 12, 30),
         # Do not pass values after this date
         reverse=False)
 
@@ -58,4 +58,4 @@ if __name__ == '__main__':
     print('Final Portfolio Value: %.2f' % finalValue)
     profit = (finalValue / initValue - 1)*100
     print(f'Profit: {round(profit, 2)}%')
-    # cerebro.plot()
+    cerebro.plot()
