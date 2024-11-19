@@ -46,13 +46,13 @@ if __name__ == '__main__':
         # Do not pass values before this date
         todate=datetime.datetime(2024, 11, 18),
         # Do not pass values after this date
-        reverse=True,
-        )
+        reverse=False)
+
     # Add the Data Feed to Cerebro
     cerebro.adddata(data)
 
     # Set our desired cash start
-    cerebro.broker.setcash(500000.0)
+    cerebro.broker.setcash(100000.0)
 
     # Print out the starting conditions
     print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
