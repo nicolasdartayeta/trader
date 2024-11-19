@@ -6,9 +6,9 @@ class TestStrategy(bt.Strategy):
     params = (
         ('periodShortSMA', 5),
         ('periodLongSMA', 30),
-        ('rsi_period', 5),
-        ('rsi_upper', 80),
-        ('rsi_lower', 25),
+        ('rsi_period', 10),
+        ('rsi_upper', 70),
+        ('rsi_lower', 30),
         ('maxOrders', 20),
     )
 

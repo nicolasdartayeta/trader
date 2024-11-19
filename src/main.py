@@ -19,15 +19,15 @@ if __name__ == '__main__':
     # Datas are in a subfolder of the samples. Need to find where the script is
     # because it could have been called from anywhere
     modpath = os.path.dirname(os.path.abspath(sys.argv[0]))
-    datapath = os.path.join(modpath, '../data/BRK-B.csv')
+    datapath = os.path.join(modpath, '../data/JPM.csv')
 
     # Create a Data Feed
     data = bt.feeds.YahooFinanceCSVData(
         dataname=datapath,
         # Do not pass values before this date
-        fromdate=datetime.datetime(2015, 2, 2),
+        fromdate=datetime.datetime(2020, 1, 1),
         # Do not pass values before this date
-        todate=datetime.datetime(2024, 10, 30),
+        todate=datetime.datetime(2024, 1, 1),
         # Do not pass values after this date
         reverse=False)
 
@@ -48,11 +48,11 @@ if __name__ == '__main__':
     
     finalValue = cerebro.broker.getvalue()
 
-    finalPosition = cerebro.broker.getposition(data)
+    # finalPosition = cerebro.broker.getposition(data)
 
     # Por si quedamos comprados en algun instrumento
-    if (finalPosition):
-        finalValue += + finalPosition.price * finalPosition.size
+    # if (finalPosition):
+        # finalValue += + finalPosition.price * finalPosition.size
 
     # Print out the final result
     print('Final Portfolio Value: %.2f' % finalValue)
