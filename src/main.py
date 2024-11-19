@@ -14,7 +14,7 @@ if __name__ == '__main__':
     cerebro = bt.Cerebro()
 
     # Add a strategy
-    cerebro.addstrategy(TestStrategy, exitbars=60)
+    cerebro.addstrategy(TestStrategy, exitbars=30)
 
     # Datas are in a subfolder of the samples. Need to find where the script is
     # because it could have been called from anywhere
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         # Do not pass values before this date
         fromdate=datetime.datetime(2015, 2, 2),
         # Do not pass values before this date
-        todate=datetime.datetime(2024, 10, 30),
+        todate=datetime.datetime(2017, 10, 30),
         # Do not pass values after this date
         reverse=False)
 
@@ -45,11 +45,17 @@ if __name__ == '__main__':
     initValue = cerebro.broker.getvalue()
     # Run over everything
     cerebro.run()
-
-
-    # Print out the final result
-    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+    
     finalValue = cerebro.broker.getvalue()
 
-    print('Profit: %.2f' % (finalValue - initValue))
-    cerebro.plot()
+    finalPosition = cerebro.broker.getposition(data)
+
+    # Por si quedamos comprados en algun instrumento
+    if (finalPosition):
+        finalValue += + finalPosition.price * finalPosition.size
+
+    # Print out the final result
+    print('Final Portfolio Value: %.2f' % finalValue)
+
+    print('Profit: %.2f' % (finalValue / initValue - 1))
+    # cerebro.plot()

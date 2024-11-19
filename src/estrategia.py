@@ -26,6 +26,8 @@ class TestStrategy(bt.Strategy):
         self.butSignal2 = True
         self.buySignal3 = True
 
+        self.generateSellSignal1()
+
         # To keep track of pending orders and buy price/commission
         self.order = None
         self.orders = []
@@ -35,6 +37,10 @@ class TestStrategy(bt.Strategy):
     # Cross method
     def generateBuySignal1(self):
         self.buySignal1 = bt.indicators.CrossUp(self.shortSMA, self.longSMA)
+
+    # Cross method
+    def generateSellSignal1(self):
+        self.sellSignal1 = bt.indicators.CrossDown(self.shortSMA, self.longSMA)    
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -86,14 +92,24 @@ class TestStrategy(bt.Strategy):
             self.log(f'shortSMA: {self.shortSMA[0]}, longSMA: {self.longSMA[0]}')
             # BUY, BUY, BUY!!! (with default parameters)
             self.log('BUY CREATE, %.2f' % self.dataclose[0])
-
+            
             # Keep track of the created order to avoid a 2nd order
-            self.orders.append(self.buy())
+            self.orders.append(self.buy(size=10))
         if self.position: 
             # Already in the market ... we might sell
-            if len(self) >= (self.bar_executed + self.params.exitbars):
+            if len(self) >= (self.bar_executed + self.params.exitbars) and self.sellSignal1[0]:
                 # SELL
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
+                size = int(self.cash / self.dataclose[0] / 4)
+
                 # Keep track of the created order to avoid a 2nd order
-                self.orders.append(self.sell())
+                self.orders.append(self.sell(size=self.position.size))
+
+    def notify_cashvalue(self, cash, value):
+        self.value = value
+        self.cash = cash
+        print(f'cash: {cash}, value: {value}')
+
+    def stop(self):
+        self.log(f'Position: {self.position}')
