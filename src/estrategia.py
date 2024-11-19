@@ -9,7 +9,7 @@ class TestStrategy(bt.Strategy):
         ('rsi_period', 5),
         ('rsi_upper', 80),
         ('rsi_lower', 25),
-        ('maxOrders', 10),
+        ('maxOrders', 20),
     )
 
     def log(self, txt, dt=None):
@@ -57,10 +57,10 @@ class TestStrategy(bt.Strategy):
 
     # Bollinger bands
     def generateBuySignal3(self):
-        self.buySignal3 = self.data.close > self.bb.top
+        self.buySignal3 = self.data.close < self.bb.bot
 
     def generateSellSignal3(self):
-        self.sellSignal3 = self.data.close < self.bb.bot
+        self.sellSignal3 = self.data.close > self.bb.top
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -103,29 +103,34 @@ class TestStrategy(bt.Strategy):
         # Simply log the closing price of the series from the reference
         self.log('Close, %.2f' % self.dataclose[0])
 
-        # Check if an order is pending ... if yes, we cannot send a 2nd one
+        # Check si se llego al maximo numero de ordenes concurrentes permitido. Si es asi cancelar todas.
         if len(self.orders) >= self.params.maxOrders:
+            for order in self.orders:
+                self.cancel(order)
+                self.orders.remove(order)
             return
 
-        # Not yet ... we MIGHT BUY if ...
+        # Evaluan indicadores de compra
         if self.cash >= self.dataclose[0] and self.buySignal1[0] or self.buySignal2[0]:
             self.log(f'shortSMA: {self.shortSMA[0]}, longSMA: {self.longSMA[0]}')
-            # BUY, BUY, BUY!!! (with default parameters)
+            # BUY
             self.log('BUY CREATE, %.2f' % self.dataclose[0])
-            # Calcular el size de la orden. Compra entre con entre el 20% y el 80% del cash disponible
-            size = int(self.cash / (self.dataclose[0]*1.01) * 0.5)
+            # Calcular el size de la orden.
+            size = int(self.cash / (self.dataclose[0]*1.01) * ((100 - self.rsi[0])/100))
             self.log(f'size: {size}')
             # Añadir orden a ordenes abiertas
             self.orders.append(self.buy(size=size))
 
+        # Si tenemos activos en la cartera
         if self.position: 
-            # Already in the market ... we might sell
-            self.log(f'signal1: {self.sellSignal1[0]}, signal2: {self.sellSignal2[0]}, signal3: {self.sellSignal3[0]}')
+            # Evaluar indicadores de venta
+            
             if self.sellSignal1[0] or self.sellSignal3[0]:
+                self.log(f'sellsignal1: {self.sellSignal1[0]}, sellsignal2: {self.sellSignal2[0]}, sellsignal3: {self.sellSignal3[0]}')
                 # SELL
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
-
-                size = self.position.size
+                self.log((self.rsi[0])/100)
+                size = self.position.size * ((self.rsi[0])/100)
 
                 # Keep track of the created order to avoid a 2nd order
                 self.orders.append(self.sell(size=int(size)))
